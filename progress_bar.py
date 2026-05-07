@@ -75,7 +75,7 @@ class ProgressBar:
         else:
             speed_text = self._format_speed(speed)
             progress_text = (
-                f"\r\033[K{self.label} processed {self._format_value(current)} "
+                f"\r\033[K{self.label} обработано {self._format_value(current)} "
                 f"{speed_text}"
             )
 
@@ -104,7 +104,7 @@ class ProgressBar:
         return (
             f"\r\033[K{self.label} {percent:6.2f}% [{bar}] "
             f"{self._format_value(current)} / {self._format_value(self.total)} "
-            f"{self._format_speed(speed)} ETA {eta}"
+            f"{self._format_speed(speed)} осталось {eta}"
         )
 
     def _format_value(self, value: int) -> str:

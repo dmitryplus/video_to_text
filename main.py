@@ -25,85 +25,85 @@ DEFAULT_OUTPUT_SUFFIX = "_transcript.txt"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Transcribe an audio file with GigaAM v3 via Hugging Face Transformers."
+        description="Распознать аудиофайл через GigaAM v3 и Hugging Face Transformers."
     )
     parser.add_argument(
         "audio_path",
         nargs="?",
         default="record.mp3",
-        help="Path or URL to the input recording. Defaults to record.mp3.",
+        help="Путь или URL исходной записи. По умолчанию: record.mp3.",
     )
     parser.add_argument(
         "--model",
         default=DEFAULT_MODEL,
-        help=f"Hugging Face model id. Defaults to {DEFAULT_MODEL}.",
+        help=f"Идентификатор модели Hugging Face. По умолчанию: {DEFAULT_MODEL}.",
     )
     parser.add_argument(
         "--revision",
         default=DEFAULT_REVISION,
         help=(
-            "Model revision to use. For GigaAM-v3: ssl, ctc, rnnt, "
+            "Ревизия модели. Для GigaAM-v3: ssl, ctc, rnnt, "
             "e2e_ctc, e2e_rnnt."
         ),
     )
     parser.add_argument(
         "--output",
         help=(
-            "Optional path to save the transcription as a text file. "
-            "If omitted, the file name is generated automatically."
+            "Необязательный путь для сохранения расшифровки в текстовый файл. "
+            "Если не указан, имя файла будет создано автоматически."
         ),
     )
     parser.add_argument(
         "--cache-dir",
         default=DEFAULT_CACHE_DIR,
-        help="Directory for cached downloaded media and extracted audio.",
+        help="Каталог для кэша скачанных медиафайлов и извлеченного аудио.",
     )
     parser.add_argument(
         "--keep-source-media",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Keep downloaded or source media file in the cache directory. Enabled by default.",
+        help="Сохранять скачанный или исходный медиафайл в каталоге кэша. Включено по умолчанию.",
     )
     parser.add_argument(
         "--keep-extracted-audio",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Keep extracted WAV audio in the cache directory. Enabled by default.",
+        help="Сохранять извлеченный WAV-файл в каталоге кэша. Включено по умолчанию.",
     )
     parser.add_argument(
         "--chunk-seconds",
         type=int,
         default=DEFAULT_CHUNK_SECONDS,
-        help="Target chunk length for audio processing. Defaults to 20 seconds.",
+        help="Целевая длина аудио-чанка. По умолчанию: 20 секунд.",
     )
     parser.add_argument(
         "--chunk-overlap-seconds",
         type=int,
         default=DEFAULT_CHUNK_OVERLAP_SECONDS,
-        help="Overlap between chunks. Defaults to 2 seconds.",
+        help="Перекрытие между чанками. По умолчанию: 2 секунды.",
     )
     parser.add_argument(
         "--min-chunk-seconds",
         type=int,
         default=DEFAULT_MIN_CHUNK_SECONDS,
-        help="Minimum segment length when splitting by silence. Defaults to 10 seconds.",
+        help="Минимальная длина сегмента при разбиении по тишине. По умолчанию: 10 секунд.",
     )
     parser.add_argument(
         "--max-chunk-seconds",
         type=int,
         default=DEFAULT_MAX_CHUNK_SECONDS,
-        help="Maximum segment length when splitting by silence. Defaults to 30 seconds.",
+        help="Максимальная длина сегмента при разбиении по тишине. По умолчанию: 30 секунд.",
     )
     parser.add_argument(
         "--silence-duration-seconds",
         type=float,
         default=DEFAULT_SILENCE_DURATION_SECONDS,
-        help="Minimum silence duration used by ffmpeg silencedetect. Defaults to 0.35.",
+        help="Минимальная длительность тишины для ffmpeg silencedetect. По умолчанию: 0.35.",
     )
     parser.add_argument(
         "--silence-noise-level",
         default=DEFAULT_SILENCE_NOISE_LEVEL,
-        help="Noise threshold for ffmpeg silencedetect. Defaults to -35dB.",
+        help="Порог шума для ffmpeg silencedetect. По умолчанию: -35dB.",
     )
     return parser.parse_args()
 
