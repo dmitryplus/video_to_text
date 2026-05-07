@@ -24,8 +24,8 @@ class GigaAMModelRunner:
                 "Установите зависимости: pip install -r requirements.txt"
             ) from exc
 
-        # Trusted pyannote checkpoints require this class when torch.load
-        # defaults to weights_only=True in newer PyTorch versions.
+        # Доверенные checkpoint-файлы pyannote требуют этот класс, когда torch.load
+        # по умолчанию использует weights_only=True в новых версиях PyTorch.
         torch.serialization.add_safe_globals(
             [
                 torch.torch_version.TorchVersion,
