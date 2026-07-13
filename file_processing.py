@@ -2,6 +2,7 @@ from src.download_strategies import (
     HttpDownloadStrategy,
     RequestsDownloadStrategy,
     VideoDownloadStrategy,
+    VkVideoDownloadStrategy,
     YandexDiskDownloadStrategy,
     YouTubeDownloadStrategy,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "PreparedRecording",
     "RequestsDownloadStrategy",
     "VideoDownloadStrategy",
+    "VkVideoDownloadStrategy",
     "YandexDiskDownloadStrategy",
     "YouTubeDownloadStrategy",
 ]

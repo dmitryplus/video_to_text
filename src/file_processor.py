@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from src.download_strategies import (
     HttpDownloadStrategy,
     VideoDownloadStrategy,
+    VkVideoDownloadStrategy,
     YandexDiskDownloadStrategy,
     YouTubeDownloadStrategy,
 )
@@ -41,6 +42,7 @@ class FileProcessor:
         self.keep_extracted_audio = keep_extracted_audio
         self.download_strategies: list[VideoDownloadStrategy] = [
             YouTubeDownloadStrategy(self._log),
+            VkVideoDownloadStrategy(self._log),
             YandexDiskDownloadStrategy(self._log),
             HttpDownloadStrategy(self._log),
         ]
