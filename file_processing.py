@@ -79,11 +79,23 @@ class FileProcessor:
         return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
     @staticmethod
+    def _is_youtube_url(value: str) -> bool:
+        parsed = urlparse(value)
+        host = parsed.netloc.lower()
+        return any(
+            domain in host
+            for domain in ("youtube.com", "youtu.be", "youtube-nocookie.com")
+        )
+
+    @staticmethod
     def _requires_audio_extraction(path: Path) -> bool:
         return path.suffix.lower() in VIDEO_SUFFIXES
 
     def _prepare_remote_media(self, source_url: str) -> PreparedRecording:
         cache_prefix = self._build_cache_prefix(source_url)
+        if self._is_youtube_url(source_url):
+            return self._prepare_youtube_media(source_url, cache_prefix)
+
         if self.keep_source_media or self.keep_extracted_audio:
             cache_dir = self._ensure_cache_dir()
             download_url = self._resolve_download_url(source_url)
@@ -114,6 +126,118 @@ class FileProcessor:
             source_path=downloaded_path,
             temp_dir=temp_dir,
         )
+
+    def _prepare_youtube_media(self, source_url: str, cache_prefix: str) -> PreparedRecording:
+        if self.keep_source_media or self.keep_extracted_audio:
+            cache_dir = self._ensure_cache_dir()
+            audio_path = cache_dir / f"{cache_prefix}.wav"
+            if audio_path.exists():
+                self._log(f"Найден готовый WAV в кэше: {audio_path}")
+                source_path = self._find_cached_youtube_source(cache_dir, cache_prefix)
+                return PreparedRecording(audio_path=audio_path, source_path=source_path)
+
+            downloaded_path = self._download_youtube_video(source_url, cache_dir, cache_prefix)
+            self._extract_audio(downloaded_path, audio_path)
+            source_path = downloaded_path
+            if not self.keep_source_media:
+                downloaded_path.unlink(missing_ok=True)
+                source_path = None
+            return PreparedRecording(audio_path=audio_path, source_path=source_path)
+
+        temp_dir = tempfile.TemporaryDirectory(prefix="youtube_source_")
+        temp_path = Path(temp_dir.name)
+        downloaded_path = self._download_youtube_video(source_url, temp_path, cache_prefix)
+        audio_path = temp_path / "recording.wav"
+        self._extract_audio(downloaded_path, audio_path)
+        return PreparedRecording(
+            audio_path=audio_path,
+            source_path=downloaded_path,
+            temp_dir=temp_dir,
+        )
+
+    @staticmethod
+    def _find_cached_youtube_source(cache_dir: Path, cache_prefix: str) -> Path | None:
+        candidates = sorted(
+            (
+                candidate
+                for candidate in cache_dir.glob(f"{cache_prefix}.*")
+                if candidate.suffix.lower() != ".wav"
+            ),
+            key=lambda candidate: candidate.stat().st_mtime,
+            reverse=True,
+        )
+        return candidates[0] if candidates else None
+
+    def _download_youtube_video(
+        self, source_url: str, target_dir: Path, preferred_stem: str
+    ) -> Path:
+        try:
+            from yt_dlp import YoutubeDL
+        except ImportError as exc:
+            raise SystemExit(
+                "Не удалось импортировать yt-dlp. "
+                "Установите зависимости: pip install -r requirements.txt"
+            ) from exc
+
+        target_template = str(target_dir / f"{preferred_stem}.%(ext)s")
+        progress_bar: ProgressBar | None = None
+        progress_total = 0
+
+        def progress_hook(event: dict) -> None:
+            nonlocal progress_bar, progress_total
+            status = event.get("status")
+            downloaded = int(event.get("downloaded_bytes") or 0)
+            total = int(event.get("total_bytes") or event.get("total_bytes_estimate") or 0)
+
+            if status == "downloading":
+                if progress_bar is None or total != progress_total:
+                    progress_bar = ProgressBar(total=total, label="[YouTube]")
+                    progress_total = total
+                progress_bar.update(downloaded)
+            elif status == "finished" and progress_bar is not None:
+                finished_size = downloaded or total
+                progress_bar.finish(finished_size)
+
+        self._log("Скачиваю видео с YouTube")
+        options = {
+            "format": "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]/best",
+            "outtmpl": target_template,
+            "merge_output_format": "mp4",
+            "noplaylist": True,
+            "quiet": True,
+            "no_warnings": True,
+            "noprogress": True,
+            "progress_hooks": [progress_hook],
+        }
+        try:
+            with YoutubeDL(options) as downloader:
+                info = downloader.extract_info(source_url, download=True)
+                downloaded_path = Path(downloader.prepare_filename(info))
+        except Exception as exc:
+            raise SystemExit(f"Не удалось скачать видео с YouTube: {exc}") from exc
+
+        if downloaded_path.exists():
+            self._log(f"Видео YouTube скачано: {downloaded_path}")
+            return downloaded_path
+
+        requested_downloads = info.get("requested_downloads") or []
+        for item in requested_downloads:
+            filepath = item.get("filepath")
+            if filepath and Path(filepath).exists():
+                path = Path(filepath)
+                self._log(f"Видео YouTube скачано: {path}")
+                return path
+
+        candidates = sorted(
+            target_dir.glob(f"{preferred_stem}.*"),
+            key=lambda candidate: candidate.stat().st_mtime,
+            reverse=True,
+        )
+        if candidates:
+            self._log(f"Видео YouTube скачано: {candidates[0]}")
+            return candidates[0]
+
+        raise SystemExit("yt-dlp завершился без ошибки, но скачанный файл не найден.")
 
     def _extract_local_media_audio(self, source_path: Path) -> PreparedRecording:
         if self.keep_extracted_audio:
