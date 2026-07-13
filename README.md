@@ -36,104 +36,34 @@ pip install -r requirements.txt
 
 - `pyannote/segmentation-3.0`
 
-Пример запуска через переменную окружения:
-
-```bash
-HF_TOKEN=hf_... python main.py
-```
-
-Локальный запуск напрямую из созданного virtualenv, без `source .venv/bin/activate`:
-
-```bash
-HF_TOKEN=hf_... ./.venv/bin/python main.py record.mp3 --output record_transcript.txt
-```
-
-По умолчанию будет использован `record.mp3`, результат сохранится в `record_transcript.txt`,
-а исходный медиафайл и извлечённый WAV будут кэшироваться в `.cache/recordings`.
-
-Базовый запуск:
-
-```bash
-python main.py
-```
-
-С указанием собственного файла:
-
-```bash
-python main.py path/to/audio.mp3
-```
-
-С URL на видеозапись встречи:
-
-```bash
-./.venv/bin/python main.py "https://disk.360.yandex.ru/i/*************"
-```
-
-С YouTube-ссылкой:
-
-```bash
-./.venv/bin/python main.py "https://www.youtube.com/watch?v=neHSPe-P408" --output youtube_transcript.json
-```
-
-С VK Video-ссылкой:
-
-```bash
-./.venv/bin/python main.py "https://vkvideo.ru/video-3156562_456249044" --output vk_transcript.json
-```
+С URL на видео с Яндекс.Диска:
 
 ```bash
 HF_TOKEN=hf_... ./.venv/bin/python main.py "https://disk.360.yandex.ru/i/*************"
 ```
 
+С YouTube-ссылкой:
+
+```bash
+HF_TOKEN=hf_... ./.venv/bin/python main.py "https://www.youtube.com/watch?v=neHSPe-P408"
+```
+
+С VK Video-ссылкой:
+
+```bash
+HF_TOKEN=hf_... ./.venv/bin/python main.py "https://vkvideo.ru/video-3156562_456249044"
+```
+
+С локальным аудиофайлом:
+
+```bash
+HF_TOKEN=hf_... ./.venv/bin/python main.py path/to/audio.mp3
+```
+
+Скрипт принимает только один аргумент: URL видео или путь к локальному аудиофайлу.
 Если на вход подан URL с видео, скрипт скачивает исходный видеофайл, извлекает аудиодорожку и уже её использует как основную запись для распознавания.
 
-С явным именем выходного файла:
-
-```bash
-python main.py record.mp3 --output record_transcript.txt
-```
-
 Автоматически имя выходного файла строится как `<имя_источника>_transcript.txt`.
-
-Без сохранения скачанного видео и извлечённого аудио в кэш:
-
-```bash
-python main.py "https://disk.360.yandex.ru/i/************" \
-  --no-keep-source-media \
-  --no-keep-extracted-audio
-```
-
-С выбором ревизии модели:
-
-```bash
-python main.py record.mp3 --revision e2e_rnnt
-```
-
-С настройкой параметров обработки:
-
-```bash
-python main.py record.mp3 --chunk-seconds 20 --chunk-overlap-seconds 2
-```
-
-С настройкой нарезки по тишине:
-
-```bash
-python main.py record.mp3 \
-  --chunk-seconds 20 \
-  --min-chunk-seconds 10 \
-  --max-chunk-seconds 24 \
-  --chunk-overlap-seconds 2 \
-  --silence-duration-seconds 0.35 \
-  --silence-noise-level -35dB
-```
-
-Поддерживаемые ревизии GigaAM v3:
-
-- `ssl`
-- `ctc`
-- `rnnt`
-- `e2e_ctc`
-- `e2e_rnnt`
 
 ## Краткое описание работы скрипта
 
@@ -141,9 +71,7 @@ python main.py record.mp3 \
 - Для инференса в этом проекте используются `torch==2.8.0` и `torchaudio==2.8.0`.
 - Любой входной файл проходит через единый silence-aware pipeline.
 - URL на видео поддерживаются через `file_processing.py`: Яндекс.Диск скачивается через прямую ссылку, YouTube и VK Video скачиваются через `yt-dlp` как видеофайлы до 480p, дальше из них извлекается и обрабатывается аудиодорожка.
-- По умолчанию скачанное видео и извлечённый WAV сохраняются в `.cache/recordings`.
-- При необходимости это можно отключить через `--no-keep-source-media` и `--no-keep-extracted-audio`.
+- Скачанное видео и извлечённый WAV сохраняются в `.cache/recordings`.
 - Аудио режется по тишине, с ограничением минимальной и максимальной длины сегмента.
 - Если подходящей тишины рядом нет, сегмент режется по безопасной длине.
-- Скрипт добавляет overlap между соседними сегментами и потом пытается убрать повторы на уровне слов и простых предложений.
-- Если `--output` не указан, результат все равно сохраняется автоматически в `<имя_источника>_transcript.txt`.
+- Результат всегда сохраняется автоматически в `<имя_источника>_transcript.txt`.
