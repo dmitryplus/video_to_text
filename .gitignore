@@ -4,11 +4,8 @@
 /__pycache__/
 *.py[cod]
 /.cache/recordings/
-/*_transcript.txt
-/short_record.mp3
-/recording_5ddcdecd047a_transcript.txt
-/record_transcript_silence.txt
-/record.mp3
-/record1.webm
-/update.txt
-/record_transcript.txt
+/*.txt
+*.txt
+*.mp3
+*.webm
+*.json
